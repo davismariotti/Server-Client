@@ -8,11 +8,23 @@ from PodSixNet.Connection import connection, ConnectionListener
 # This is so that I can receive input from the console whilst running the server.
 # Don't ever do this - it's slow and ugly. (I'm doing it for simplicity's sake)
 from thread import *
+import Tkinter
+from Tkinter import *
 
 class Client(ConnectionListener):
     global players
     players = []
     def __init__(self, host, port):
+        class App():
+            def __init__(self, master):
+                frame = Frame(master)
+                frame.pack()
+                connection.Send({})
+      
+        root = Tk()
+        root.title("CHAT")
+        app = App(root)
+        start_new_thread(root.mainloop,())
         print "Enter your nickname:",
         nick = raw_input()
         self.Connect((host, port))
