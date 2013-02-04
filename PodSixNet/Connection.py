@@ -20,7 +20,7 @@ class ConnectionListener:
 		{"action": "players", "number": 5, ....}
 	"""
 	def Connect(self, *args, **kwargs):
-		connection.DoConnect(*args, **kwargs)
+		connection.DoConnect(*args,**kwargs)
 		# check for connection errors:
 		self.Pump()
 	
