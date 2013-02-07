@@ -42,9 +42,11 @@ class Client(ConnectionListener):
     global players
     global widget
     players = []
-    def __init__(self, host, port):
+    def __init__(self, host, port, nick):
         self.Connect((host, port))
-        nick = raw_input()
+        
+        if nick == "":
+            nick = "Anonymous"
         connection.Send({"action": "nickname", "nickname": nick})
         # launch our threaded input loop
         #t = start_new_thread(self.InputLoop, ())
@@ -53,29 +55,7 @@ class Client(ConnectionListener):
         connection.Pump()
         self.Pump()
     
-    '''def InputLoop(self):
-        global players
-        
-        # horrid threaded input loop
-        # continually reads from stdin and sends whatever is typed to the server
-        while 1:
-            msg = raw_input()
-            if msg.startswith("/"):
-                cmd = msg[1:]
-                if cmd.lower().startswith("pm"):
-                    to = cmd[3:].split(" ", 1)[0]
-                    msg = cmd[3:].split(" ", 1)[1]
-                    if to in players:
-                        connection.Send({"action": "PM", "to": to, "message":msg})
-                    else:
-                        print "That person is not online!"
-                        continue
-                elif cmd.lower().startswith("name"):
-                    newName = cmd[5:]
-                    connection.Send({"action":"nickname","nickname":newName})
-            else:
-                connection.Send({"action": "message", "message": msg})
-    '''
+    
     def send(self,data):
         connection.Send({"action": "message", "message": data})
     #######################################
@@ -116,28 +96,87 @@ class Client(ConnectionListener):
     def Network_disconnected(self, data):
         print 'Server disconnected'
         exit()
-c = Client("localhost", 12345)
 
 
 def sendStuff():
     global widget
     global entry
+    global c
     c.send(entry.get())
     entry.delete(0,END)
     widget.yview(END)
+def sendStuffEvent(event):
+    sendStuff()
+global host, port, nickname    
+host = "127.0.0.1"
+port = 12345
+nickname = ""
+def showPref():
+    global host, port, nickname
+    def save():
+        global host, port, nickname
+        host = hostEntry.get()
+        port = int(portEntry.get())
+        nickname = nickEntry.get()
+        print nickname
+    win2 = Tk()
+    labelHost = Label(win2,text="Host: ")
+    hostEntry = Entry(win2)
+    labelHost.pack()
+    hostEntry.pack()
+    hostEntry.insert(0, "127.0.0.1")
+    labelPort = Label(win2,text="Port: ")
+    portEntry = Entry(win2)
+    labelPort.pack()
+    portEntry.pack()
+    portEntry.insert(0, "12345")
+    labelNick = Label(win2,text="Nickname: ")
+    nickEntry = Entry(win2)
+    labelNick.pack()
+    nickEntry.pack()
+    nickEntry.insert(0, "Anonymous")
+    Button(win2,text="Save",command=save).pack()
+def connect():
+    global c
+    c = Client(host, port, nickname)
+    thread.start_new_thread(startClient, ())
+def disconnect():
+    global c
+    
 def startClient():
     global c
     while 1:
         c.Loop()
         sleep(0.001)
-thread.start_new_thread(startClient, ())
+    
 root = Tk()
+def quit(event):
+    root.quit()
+def commaPref(event):
+    showPref()
+root.bind("<Alt-q>", quit)
+root.bind("<Alt-comma>",commaPref)
+menuBar = Menu(root)
+fileMenu = Menu(menuBar, tearoff=False)
+menuBar.add_cascade(label = "File", underline = 0, menu = fileMenu)
+fileMenu.add_command(label="Preferences", command = showPref)
+fileMenu.add_command(label="QUIT",underline=1,command = root.quit)
+root.config(menu=menuBar)
+
 widget = Console(root)
 widget.pack(side=TOP,expand=YES,fill=BOTH)
+
 entry = Entry()
+entry.bind("<Return>", sendStuffEvent, ())
 entry.pack()
+
 b = Button(text="SEND!",command=sendStuff)
 b.pack()
+connect = Button(text="CONNECT!",command=connect)
+disconnect = Button(text="DISCONNECT!",command=disconnect)
+connect.pack()
+disconnect.pack()
+
 
 scrollbar = Scrollbar()
 scrollbar.pack(side=RIGHT, fill=Y)
