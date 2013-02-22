@@ -23,6 +23,8 @@ class ClientChannel(Channel):
        for p in self._server.players:
            if p.nickname == str:
                return p
+    def Network_disconnect(self, data):
+        self.Close()
     def Network_message(self, data):
             self._server.SendToAll({"action": "message", "message": data['message'], "from": self.nickname})
             nicks = []
@@ -30,7 +32,6 @@ class ClientChannel(Channel):
                 nicks.append(p.nickname)
             self._server.SendToAll({"action":"players", "players": nicks})
             print self.nickname + ": " + data['message']
-            
     def Network_nickname(self, data):
         self.nickname = data['nickname']
         self._server.SendPlayers()
@@ -40,8 +41,16 @@ class ClientChannel(Channel):
         to = data['to']
         PMfrom = self
         p = self.getPlayer(to)
-        p.Send({"action":"PMrecieve", "message":message, "from": self.nickname})
-        PMfrom.Send({"action":"PMsuccess", "success":True})
+        try:
+            p.Send({"action":"PMrecieve", "message":message, "from": self.nickname})
+            PMfrom.Send({"action":"PMsuccess", "success":True})
+        except:
+            PMfrom.Send({"action":"PMsuccess", "success":False})
+    def Network_list(self,data):
+        str = ""
+        for p in self._server.players:
+            str = str+p.nickname+", "
+        self.Send({"action":"listRecieve","players":str})
 class ChatServer(Server):
     channelClass = ClientChannel
     
@@ -54,13 +63,15 @@ class ChatServer(Server):
         self.AddPlayer(channel)
     
     def AddPlayer(self, player):
-        print "New Player: "+str(player.addr)
+        print "New Client: "+str(player.addr)
         self.players[player] = True
-        self.SendToAll({"action":"serverMessage","message":player.nickname + " connected!"})
         self.SendPlayers()
+        sleep(1)
+        self.SendToAll({"action":"serverMessage","message":player.nickname + " connected!"})
+
     
     def DelPlayer(self, player):
-        print "Deleting Player: " +str(player.addr)
+        print "Deleting Client: " +str(player.addr)
         del self.players[player]
         self.SendPlayers()
     
