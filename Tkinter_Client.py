@@ -1,7 +1,7 @@
 '''
 Created on Jan 7, 2013
 
-@author: Davis Mariotti
+@author: gomeow
 '''
 from PodSixNet.Connection import connection, ConnectionListener
 from Tkinter import *
